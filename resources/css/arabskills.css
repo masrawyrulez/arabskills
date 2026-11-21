@@ -1,0 +1,158 @@
+/* General Styles */
+body {
+    position: relative;
+    font-style: normal;
+    line-height: 1.5;
+    color: #000000;
+    font-family: 'Didact Gothic', sans-serif;
+}
+
+section {
+    background-color: #ffffff;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    overflow: hidden;
+    padding: 30px 0;
+}
+
+.container, .container-fluid {
+    position: relative;
+    word-wrap: break-word;
+}
+
+h1, h2, h3, h4 {
+    margin: 0;
+    padding: 0;
+    letter-spacing: 0.68px;
+}
+
+p {
+    letter-spacing: 0.5px;
+    line-height: 1.7;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+a {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+/* Add more styles as needed */
+
+/* Specific Section Styles */
+.cid-uwRleHDkBf {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    background-color: #ffffff;
+}
+
+.cid-uwRleHQILD {
+    padding-top: 10rem;
+    padding-bottom: 10rem;
+    background-image: url("https://r.8b.io/703215/images/background2-h_m490itbk.jpg");
+    align-items: center;
+    display: flex;
+}
+
+.cid-uwRleHQILD .mbr-overlay {
+    background: #ffffff;
+    opacity: 0.8;
+}
+
+.cid-uwRleHQILD .mbr-section-title,
+.cid-uwRleHQILD .mbr-section-btn {
+    color: #85415a;
+}
+
+/* Add more specific section styles as needed */
+
+/* Button Styles */
+.btn {
+    padding: 15px 22px;
+    border-radius: 0px;
+    line-height: 14px;
+    text-align: center;
+    position: relative;
+    margin: .4rem .8rem;
+    font-weight: 700;
+    border-width: 2px;
+    border-style: solid;
+    font-style: normal;
+    white-space: normal;
+    transition: all .2s ease-in-out, box-shadow 2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-word;
+    line-height: 1.5;
+    letter-spacing: 1px;
+}
+
+.btn-primary {
+    background-color: #85415a;
+    border-color: #85415a;
+    color: #ffffff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:disabled {
+    background-color: transparent;
+    border-color: #85415a;
+    color: #85415a;
+}
+
+/* Add more button styles as needed */
+
+/* Form Styles */
+.form-block input,
+.form-block textarea {
+    border-radius: 0;
+    background-color: #ffffff;
+    margin: 0;
+    transition: 0.4s;
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    padding: 11px 1rem;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1rem;
+}
+
+.form-block input:focus,
+.form-block textarea:focus {
+    border-color: #85415a;
+}
+
+/* Add more form styles as needed */
+
+/* Responsive Styles */
+@media (max-width: 767px) {
+    .align-left,
+    .align-center {
+        text-align: center;
+    }
+
+    .display-1 {
+        font-size: 1.48rem;
+    }
+
+    .display-2 {
+        font-size: calc(1.3679999999999999rem * 1.5);
+    }
+
+    .display-5 {
+        font-size: calc(1rem * 0.9);
+    }
+
+    .display-7 {
+        font-size: calc(1rem * 0.9);
+    }
+}
+
+/* Add more responsive styles as needed */
