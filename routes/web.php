@@ -26,7 +26,8 @@ Route::get('/verify/{code?}', function ($code = null, \App\Services\GoogleSheetS
     if (!$code) {
         return redirect('/#verifySection');
     }
-    if ($sheetService->findWfpLearner($code)) {
+    $type = $sheetService->determineCertificateType($code);
+    if ($type === 'wfp') {
         return redirect('/wfpc01/' . urlencode($code));
     }
     return redirect('/ec/' . urlencode($code));

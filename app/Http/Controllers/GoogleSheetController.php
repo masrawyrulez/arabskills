@@ -19,9 +19,14 @@ class GoogleSheetController extends Controller
      */
     public function showLearner($code)
     {
+        $code = trim($code);
         $learner = $this->sheetService->findLearner($code);
 
         if (!$learner) {
+            // Check if it belongs to WFP instead
+            if ($this->sheetService->findWfpLearner($code)) {
+                return redirect('/wfpc01/' . urlencode($code));
+            }
             return response()->view('learner_not_found', ['code' => $code], 404);
         }
 
@@ -33,9 +38,14 @@ class GoogleSheetController extends Controller
      */
     public function showWfp($code)
     {
+        $code = trim($code);
         $learner = $this->sheetService->findWfpLearner($code);
 
         if (!$learner) {
+            // Check if it belongs to general learner instead
+            if ($this->sheetService->findLearner($code)) {
+                return redirect('/ec/' . urlencode($code));
+            }
             return response()->view('learner_not_found', ['code' => $code], 404);
         }
 
@@ -47,6 +57,7 @@ class GoogleSheetController extends Controller
      */
     public function showPc($code)
     {
+        $code = trim($code);
         $learner = $this->sheetService->findLearner($code);
 
         if (!$learner) {
