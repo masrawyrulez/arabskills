@@ -32,3 +32,11 @@ Route::get('/verify/{code?}', function ($code = null, \App\Services\GoogleSheetS
     return redirect('/ec/' . urlencode($code));
 })->name('certificate.verify');
 
+Route::get('/lang/{locale}', function ($locale) {
+    if (in_array($locale, ['en', 'ar'])) {
+        session(['locale' => $locale]);
+    }
+    return redirect()->back();
+})->name('lang.switch');
+
+

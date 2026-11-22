@@ -1,20 +1,28 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+@php
+    $isAr = app()->getLocale() == 'ar';
+@endphp
+<html lang="{{ app()->getLocale() }}" dir="{{ $isAr ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>@yield('title', 'ArabSkills | Technical & Vocational Education Development & School Management')</title>
-    <meta name="description" content="@yield('meta_description', 'ArabSkills is Egypt’s leading TVET development and consulting firm specialized in Applied Technology Schools (ATS), vocational centers, international accreditation, and institutional transformation.')">
+    <title>@yield('title', $isAr ? 'مهارات العرب | استشارات وتطوير التعليم الفني وتشغيل المدارس التطبيقية' : 'ArabSkills | Technical & Vocational Education Development & School Management')</title>
+    <meta name="description" content="@yield('meta_description', $isAr ? 'شركة مهارات العرب للحلول المتكاملة - رواد تطوير التعليم الفني والتدريب المهني (TVET)، إدارة مدارس التكنولوجيا التطبيقية (ATS)، والاعتماد الدولي في مصر.' : 'ArabSkills is Egypt’s leading TVET development and consulting firm specialized in Applied Technology Schools (ATS), vocational centers, international accreditation, and institutional transformation.')">
     <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/png">
 
     <!-- Google Fonts: Plus Jakarta Sans & Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap 5.3 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap 5.3 CSS (Standard or RTL) -->
+    @if($isAr)
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    @else
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    @endif
+
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- FontAwesome 6 -->
@@ -42,17 +50,17 @@
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: {{ $isAr ? "'Cairo', sans-serif" : "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }};
             color: var(--as-slate);
             background-color: var(--as-white);
             overflow-x: hidden;
-            line-height: 1.65;
+            line-height: {{ $isAr ? '1.8' : '1.65' }};
         }
 
         h1, h2, h3, h4, h5, h6 {
             color: var(--as-dark);
             font-weight: 700;
-            letter-spacing: -0.02em;
+            letter-spacing: {{ $isAr ? '0' : '-0.02em' }};
         }
 
         /* Top Bar */
@@ -74,7 +82,7 @@
 
         /* Navbar */
         .navbar-main {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(123, 34, 64, 0.08);
@@ -98,7 +106,7 @@
             font-weight: 600;
             font-size: 0.92rem;
             color: #1e293b;
-            padding: 8px 14px;
+            padding: 8px 12px;
             border-radius: 8px;
             transition: all 0.2s ease;
         }
@@ -131,7 +139,7 @@
             color: var(--as-primary);
             font-weight: 600;
             font-size: 0.92rem;
-            padding: 10px 22px;
+            padding: 10px 20px;
             border-radius: 10px;
             border: 1.5px solid var(--as-primary);
             transition: all 0.25s ease;
@@ -160,6 +168,27 @@
             box-shadow: 0 8px 22px rgba(217, 119, 6, 0.4);
         }
 
+        /* Language Switcher Pill */
+        .lang-switch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1.5px solid rgba(123, 34, 64, 0.2);
+            color: var(--as-primary);
+            background: var(--as-primary-soft);
+        }
+        .lang-switch-btn:hover {
+            background: var(--as-primary);
+            color: #ffffff;
+            border-color: var(--as-primary);
+        }
+
         /* Section Badges & Titles */
         .section-badge {
             display: inline-flex;
@@ -170,7 +199,7 @@
             font-weight: 700;
             font-size: 0.78rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: {{ $isAr ? '0' : '0.08em' }};
             padding: 6px 14px;
             border-radius: 50px;
             border: 1px solid rgba(123, 34, 64, 0.15);
@@ -181,14 +210,14 @@
             font-weight: 800;
             color: var(--as-dark);
             margin-bottom: 16px;
-            line-height: 1.25;
+            line-height: 1.3;
         }
         .section-subtitle {
             font-size: 1.05rem;
             color: var(--as-muted);
             max-width: 680px;
             margin: 0 auto 3rem auto;
-            line-height: 1.7;
+            line-height: {{ $isAr ? '1.9' : '1.7' }};
         }
 
         /* Card Styles */
@@ -307,7 +336,7 @@
             content: '';
             position: absolute;
             bottom: 0;
-            left: 0;
+            {{ $isAr ? 'right: 0;' : 'left: 0;' }}
             width: 32px;
             height: 2.5px;
             background: var(--as-primary);
@@ -331,7 +360,7 @@
         }
         .footer-links a:hover {
             color: #ffffff;
-            transform: translateX(4px);
+            transform: {{ $isAr ? 'translateX(-4px)' : 'translateX(4px)' }};
         }
         .footer-contact-item {
             display: flex;
@@ -354,7 +383,7 @@
             justify-content: center;
             background: rgba(255, 255, 255, 0.06);
             color: #cbd5e1;
-            margin-right: 8px;
+            margin-{{ $isAr ? 'left' : 'right' }}: 8px;
             transition: all 0.2s ease;
             text-decoration: none;
         }
@@ -368,7 +397,7 @@
         #backToTop {
             position: fixed;
             bottom: 25px;
-            right: 25px;
+            {{ $isAr ? 'left: 25px;' : 'right: 25px;' }}
             width: 44px;
             height: 44px;
             background: var(--as-primary);
@@ -416,7 +445,7 @@
                     <div class="d-flex align-items-center gap-4">
                         <span><i class="fa-solid fa-phone me-1 text-warning"></i> +20 100 021 4421</span>
                         <span><i class="fa-solid fa-envelope me-1 text-warning"></i> info@arabskills.com</span>
-                        <span><i class="fa-solid fa-location-dot me-1 text-warning"></i> Cairo, Egypt</span>
+                        <span><i class="fa-solid fa-location-dot me-1 text-warning"></i> {{ $isAr ? 'القاهرة، مصر' : 'Cairo, Egypt' }}</span>
                     </div>
                 </div>
                 <div class="col-md-5 text-end">
@@ -425,8 +454,19 @@
                         <a href="https://facebook.com/arabskills.eg" target="_blank" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
                         <span class="text-secondary opacity-50">|</span>
                         <a href="#verifySection" class="text-decoration-none fw-semibold text-warning" onclick="openVerifyModal(event)">
-                            <span class="pulse-dot me-1"></span> Verify Certificate
+                            <span class="pulse-dot me-1"></span> {{ $isAr ? 'التحقق من الشهادات' : 'Verify Certificate' }}
                         </a>
+                        <span class="text-secondary opacity-50">|</span>
+                        <!-- Language Switcher in Top Bar -->
+                        @if($isAr)
+                            <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-btn" title="Switch to English">
+                                <i class="fa-solid fa-globe"></i> English
+                            </a>
+                        @else
+                            <a href="{{ route('lang.switch', 'ar') }}" class="lang-switch-btn" title="التحويل إلى العربية">
+                                <i class="fa-solid fa-globe"></i> العربية
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -447,38 +487,65 @@
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ url('/') }}">Home</a>
+                        <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ url('/') }}">
+                            {{ $isAr ? 'الرئيسية' : 'Home' }}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('about') ? 'active' : '' }}" href="{{ url('/about') }}">About Us</a>
+                        <a class="nav-link {{ request()->is('about') ? 'active' : '' }}" href="{{ url('/about') }}">
+                            {{ $isAr ? 'من نحن' : 'About Us' }}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}#services">Services</a>
+                        <a class="nav-link" href="{{ url('/') }}#services">
+                            {{ $isAr ? 'خدماتنا' : 'Services' }}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}#methodology">Methodology</a>
+                        <a class="nav-link" href="{{ url('/') }}#methodology">
+                            {{ $isAr ? 'منهجيتنا' : 'Methodology' }}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}#projects">Schools & Projects</a>
+                        <a class="nav-link" href="{{ url('/') }}#projects">
+                            {{ $isAr ? 'المدارس والمشروعات' : 'Schools & Projects' }}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}#partners">Partners</a>
+                        <a class="nav-link" href="{{ url('/') }}#partners">
+                            {{ $isAr ? 'شركاؤنا' : 'Partners' }}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}#software">Digital Platform</a>
+                        <a class="nav-link" href="{{ url('/') }}#software">
+                            {{ $isAr ? 'المنصة الرقمية' : 'Digital Platform' }}
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('/') }}#founder">Founder</a>
+                        <a class="nav-link" href="{{ url('/') }}#founder">
+                            {{ $isAr ? 'المؤسس' : 'Founder' }}
+                        </a>
                     </li>
                 </ul>
 
                 <div class="d-flex align-items-center gap-2">
+                    <!-- Mobile / Nav Language Switcher -->
+                    @if($isAr)
+                        <a href="{{ route('lang.switch', 'en') }}" class="lang-switch-btn d-lg-none">
+                            <i class="fa-solid fa-globe"></i> English
+                        </a>
+                    @else
+                        <a href="{{ route('lang.switch', 'ar') }}" class="lang-switch-btn d-lg-none">
+                            <i class="fa-solid fa-globe"></i> العربية
+                        </a>
+                    @endif
+
                     <button class="btn btn-as-outline d-none d-sm-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#verifyModal">
                         <i class="fa-solid fa-certificate text-warning"></i>
-                        <span>Verify Certificate</span>
+                        <span>{{ $isAr ? 'التحقق من شهادة' : 'Verify Certificate' }}</span>
                     </button>
                     <a href="{{ url('/') }}#contact" class="btn btn-as-primary">
-                        Contact Us
+                        {{ $isAr ? 'تواصل معنا' : 'Contact Us' }}
                     </a>
                 </div>
             </div>
@@ -507,25 +574,25 @@
             <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
                 <div class="modal-header border-0 pb-0 pt-4 px-4">
                     <div>
-                        <div class="section-badge mb-1"><i class="fa-solid fa-shield-check"></i> Official Portal</div>
-                        <h5 class="modal-title fw-bold" id="verifyModalLabel">Verify Learner Certificate</h5>
-                        <p class="text-muted small mb-0">Enter the unique certificate code found on the issued credential.</p>
+                        <div class="section-badge mb-1"><i class="fa-solid fa-shield-check"></i> {{ $isAr ? 'البوابة الرسمية للاعتماد' : 'Official Portal' }}</div>
+                        <h5 class="modal-title fw-bold" id="verifyModalLabel">{{ $isAr ? 'التحقق من شهادة المتدرب' : 'Verify Learner Certificate' }}</h5>
+                        <p class="text-muted small mb-0">{{ $isAr ? 'أدخل الرمز التعريفي الفريد المطبوع على الشهادة الصادرة.' : 'Enter the unique certificate code found on the issued credential.' }}</p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="modalVerifyForm" onsubmit="handleVerifySubmit(event, 'modalCodeInput')">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-dark small">Certificate / Learner Code</label>
+                            <label class="form-label fw-semibold text-dark small">{{ $isAr ? 'كود الشهادة / المتدرب' : 'Certificate / Learner Code' }}</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-qrcode"></i></span>
-                                <input type="text" id="modalCodeInput" class="form-control bg-light border-start-0 py-2" placeholder="e.g. DEMO100 or WFP100" required>
+                                <span class="input-group-text bg-light border-{{ $isAr ? 'start' : 'end' }}-0 text-muted"><i class="fa-solid fa-qrcode"></i></span>
+                                <input type="text" id="modalCodeInput" class="form-control bg-light border-{{ $isAr ? 'end' : 'start' }}-0 py-2" placeholder="{{ $isAr ? 'مثال: DEMO100 أو WFP100' : 'e.g. DEMO100 or WFP100' }}" required>
                             </div>
-                            <div class="form-text text-muted">Try sample test codes: <code class="text-primary">DEMO100</code> or <code class="text-primary">WFP100</code></div>
+                            <div class="form-text text-muted">{{ $isAr ? 'يمكنك تجربة أكواد الاختبار:' : 'Try sample test codes:' }} <code class="text-primary">DEMO100</code> {{ $isAr ? 'أو' : 'or' }} <code class="text-primary">WFP100</code></div>
                         </div>
                         <button type="submit" class="btn btn-as-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            <span>Search & Verify Credentials</span>
+                            <span>{{ $isAr ? 'بحث والتحقق من الشهادة' : 'Search & Verify Credentials' }}</span>
                         </button>
                     </form>
                 </div>
@@ -541,7 +608,11 @@
                 <div class="col-lg-4 col-md-6">
                     <img src="{{ asset('images/logo.png') }}" alt="ArabSkills" style="height: 48px; filter: brightness(0) invert(1);" class="mb-3">
                     <p class="text-slate-300 small mb-3" style="line-height: 1.8;">
-                        ArabSkills (شركة مهارات العرب للحلول المتكاملة) is Egypt’s premier educational transformation and TVET consulting firm. We specialize in Applied Technology Schools (ATS), vocational centers, international accreditation, and institutional transformation.
+                        @if($isAr)
+                            شركة مهارات العرب للحلول المتكاملة (ArabSkills) هي بيت الخبرة الرائد في مصر في مجال تطوير واستشارات التعليم الفني والتدريب المهني (TVET)، وتشغيل مدارس التكنولوجيا التطبيقية (ATS)، ومراكز التدريب المهني، والتأهيل للاعتماد الدولي.
+                        @else
+                            ArabSkills (شركة مهارات العرب للحلول المتكاملة) is Egypt’s premier educational transformation and TVET consulting firm. We specialize in Applied Technology Schools (ATS), vocational centers, international accreditation, and institutional transformation.
+                        @endif
                     </p>
                     <div class="d-flex align-items-center gap-2">
                         <a href="https://linkedin.com/company/arabskills" target="_blank" class="social-btn" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
@@ -553,40 +624,40 @@
 
                 <!-- Col 2: Core Solutions -->
                 <div class="col-lg-2 col-md-6 col-6">
-                    <h5>Our Services</h5>
+                    <h5>{{ $isAr ? 'خدماتنا' : 'Our Services' }}</h5>
                     <ul class="footer-links">
-                        <li><a href="{{ url('/') }}#services"><i class="fa-solid fa-chevron-right text-xs"></i> ATS Management</a></li>
-                        <li><a href="{{ url('/') }}#services"><i class="fa-solid fa-chevron-right text-xs"></i> TVET Consultations</a></li>
-                        <li><a href="{{ url('/') }}#services"><i class="fa-solid fa-chevron-right text-xs"></i> Curriculum Design</a></li>
-                        <li><a href="{{ url('/') }}#services"><i class="fa-solid fa-chevron-right text-xs"></i> Teacher Training</a></li>
-                        <li><a href="{{ url('/') }}#services"><i class="fa-solid fa-chevron-right text-xs"></i> Quality & Accreditation</a></li>
-                        <li><a href="{{ url('/') }}#software"><i class="fa-solid fa-chevron-right text-xs"></i> School Management App</a></li>
+                        <li><a href="{{ url('/') }}#services"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'إدارة المدارس التطبيقية' : 'ATS Management' }}</a></li>
+                        <li><a href="{{ url('/') }}#services"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'استشارات مشروعات TVET' : 'TVET Consultations' }}</a></li>
+                        <li><a href="{{ url('/') }}#services"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'تطوير المناهج والجدارات' : 'Curriculum Design' }}</a></li>
+                        <li><a href="{{ url('/') }}#services"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'تدريب المعلمين والمدربين' : 'Teacher Training' }}</a></li>
+                        <li><a href="{{ url('/') }}#services"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'الجودة والاعتماد الدولي' : 'Quality & Accreditation' }}</a></li>
+                        <li><a href="{{ url('/') }}#software"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'برنامج إدارة المدارس' : 'School Management App' }}</a></li>
                     </ul>
                 </div>
 
                 <!-- Col 3: Quick Links -->
                 <div class="col-lg-2 col-md-6 col-6">
-                    <h5>Quick Links</h5>
+                    <h5>{{ $isAr ? 'روابط سريعة' : 'Quick Links' }}</h5>
                     <ul class="footer-links">
-                        <li><a href="{{ url('/about') }}"><i class="fa-solid fa-chevron-right text-xs"></i> About ArabSkills</a></li>
-                        <li><a href="{{ url('/') }}#projects"><i class="fa-solid fa-chevron-right text-xs"></i> Our Projects</a></li>
-                        <li><a href="{{ url('/') }}#partners"><i class="fa-solid fa-chevron-right text-xs"></i> Strategic Partners</a></li>
-                        <li><a href="{{ url('/') }}#methodology"><i class="fa-solid fa-chevron-right text-xs"></i> Methodology</a></li>
-                        <li><a href="{{ url('/') }}#founder"><i class="fa-solid fa-chevron-right text-xs"></i> Leadership</a></li>
-                        <li><a href="#verifySection" onclick="openVerifyModal(event)"><i class="fa-solid fa-chevron-right text-xs"></i> Verify Certificate</a></li>
+                        <li><a href="{{ url('/about') }}"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'عن مهارات العرب' : 'About ArabSkills' }}</a></li>
+                        <li><a href="{{ url('/') }}#projects"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'مدارسنا ومشروعاتنا' : 'Our Projects' }}</a></li>
+                        <li><a href="{{ url('/') }}#partners"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'الشركاء الاستراتيجيون' : 'Strategic Partners' }}</a></li>
+                        <li><a href="{{ url('/') }}#methodology"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'منهجية العمل' : 'Methodology' }}</a></li>
+                        <li><a href="{{ url('/') }}#founder"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'القيادة والمؤسس' : 'Leadership' }}</a></li>
+                        <li><a href="#verifySection" onclick="openVerifyModal(event)"><i class="fa-solid {{ $isAr ? 'fa-chevron-left' : 'fa-chevron-right' }} text-xs"></i> {{ $isAr ? 'التحقق من الشهادات' : 'Verify Certificate' }}</a></li>
                     </ul>
                 </div>
 
                 <!-- Col 4: Contact & Registration -->
                 <div class="col-lg-4 col-md-6">
-                    <h5>Headquarters</h5>
+                    <h5>{{ $isAr ? 'المقر الرئيسي' : 'Headquarters' }}</h5>
                     <div class="footer-contact-item">
                         <i class="fa-solid fa-location-dot"></i>
-                        <span>11 Youssef El Gendy St., Bab El Louk, Cairo, Egypt</span>
+                        <span>{{ $isAr ? '11 شارع يوسف الجندي - باب اللوق - القاهرة - جمهورية مصر العربية' : '11 Youssef El Gendy St., Bab El Louk, Cairo, Egypt' }}</span>
                     </div>
                     <div class="footer-contact-item">
                         <i class="fa-solid fa-phone"></i>
-                        <span>+20 100 021 4421</span>
+                        <span dir="ltr">+20 100 021 4421</span>
                     </div>
                     <div class="footer-contact-item">
                         <i class="fa-solid fa-envelope"></i>
@@ -594,9 +665,9 @@
                     </div>
                     <div class="p-3 rounded-3 mt-3" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);">
                         <div class="small text-slate-400">
-                            <strong>Commercial Registry:</strong> 238074<br>
-                            <strong>Tax Card:</strong> 764-817-647<br>
-                            <strong>Accreditation Alignment:</strong> Pearson, City & Guilds, Omnia Finland, Edexcel BTEC
+                            <strong>{{ $isAr ? 'السجل التجاري:' : 'Commercial Registry:' }}</strong> 238074<br>
+                            <strong>{{ $isAr ? 'البطاقة الضريبية:' : 'Tax Card:' }}</strong> 764-817-647<br>
+                            <strong>{{ $isAr ? 'معايير الاعتماد الدولي:' : 'Accreditation Alignment:' }}</strong> Pearson, City & Guilds, Omnia Finland, Edexcel BTEC
                         </div>
                     </div>
                 </div>
@@ -605,11 +676,11 @@
             <hr style="border-color: rgba(255, 255, 255, 0.08);">
 
             <div class="row align-items-center py-2">
-                <div class="col-md-6 text-center text-md-start mb-2 mb-md-0 small">
-                    © {{ date('Y') }} <strong>ArabSkills for Complete Solutions</strong>. All rights reserved.
+                <div class="col-md-6 text-center text-md-{{ $isAr ? 'end' : 'start' }} mb-2 mb-md-0 small">
+                    © {{ date('Y') }} <strong>{{ $isAr ? 'شركة مهارات العرب للحلول المتكاملة' : 'ArabSkills for Complete Solutions' }}</strong>. {{ $isAr ? 'جميع الحقوق محفوظة.' : 'All rights reserved.' }}
                 </div>
-                <div class="col-md-6 text-center text-md-end small text-slate-400">
-                    <span>Designed for Excellence in Technical & Vocational Education</span>
+                <div class="col-md-6 text-center text-md-{{ $isAr ? 'start' : 'end' }} small text-slate-400">
+                    <span>{{ $isAr ? 'رواد التميز والابتكار في التعليم الفني والتدريب التطبيقي' : 'Designed for Excellence in Technical & Vocational Education' }}</span>
                 </div>
             </div>
         </div>
