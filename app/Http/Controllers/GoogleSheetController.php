@@ -19,6 +19,10 @@ class GoogleSheetController extends Controller
      */
     public function showLearner($code)
     {
+        if (request()->hasAny(['sync', 'refresh', 'fresh'])) {
+            $this->sheetService->purgeCache();
+        }
+
         $code = trim($code);
         $learner = $this->sheetService->findLearner($code);
 
@@ -38,6 +42,10 @@ class GoogleSheetController extends Controller
      */
     public function showWfp($code)
     {
+        if (request()->hasAny(['sync', 'refresh', 'fresh'])) {
+            $this->sheetService->purgeCache();
+        }
+
         $code = trim($code);
         $learner = $this->sheetService->findWfpLearner($code);
 
