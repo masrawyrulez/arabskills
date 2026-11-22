@@ -34,7 +34,11 @@ class GoogleSheetController extends Controller
             return response()->view('learner_not_found', ['code' => $code], 404);
         }
 
-        return view('learner', compact('learner'));
+        return response()
+            ->view('learner', compact('learner'))
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**
@@ -57,7 +61,11 @@ class GoogleSheetController extends Controller
             return response()->view('learner_not_found', ['code' => $code], 404);
         }
 
-        return view('learner3', compact('learner'));
+        return response()
+            ->view('learner3', compact('learner'))
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**
@@ -72,7 +80,11 @@ class GoogleSheetController extends Controller
             return response()->view('learner_not_found', ['code' => $code], 404);
         }
 
-        return view('learner2', compact('learner'));
+        return response()
+            ->view('learner2', compact('learner'))
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**
