@@ -63,12 +63,17 @@ class GoogleSheetService
     }
 
     /**
-     * Fetch CSV from a Google Sheet URL with caching.
+     * Fetch CSV from a Google Sheet URL with real-time live support.
      */
-    public function fetchSheet(string $url, string $cacheKey, int $ttlMinutes = 5, bool $forceFresh = false): array
+    public function fetchSheet(string $url, string $cacheKey, int $ttlMinutes = 0, bool $forceFresh = false): array
     {
         if (empty($url)) {
             return [];
+        }
+
+        $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 0);
+        if ($ttl <= 0) {
+            $forceFresh = true;
         }
 
         if ($forceFresh) {
@@ -76,20 +81,27 @@ class GoogleSheetService
         }
 
         $cached = Cache::get($cacheKey);
-        if ($cached !== null && !empty($cached) && !$forceFresh) {
+        if ($ttl > 0 && !$forceFresh && $cached !== null && !empty($cached)) {
             return $cached;
         }
 
         try {
+            // Append cache buster timestamp query parameter to force Google's edge CDN to return live data
+            $fetchUrl = $url;
+            $separator = str_contains($fetchUrl, '?') ? '&' : '?';
+            $fetchUrl .= $separator . '_live=' . microtime(true);
+
             $response = Http::withoutVerifying()
                 ->timeout(15)
                 ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'])
-                ->get($url);
+                ->get($fetchUrl);
 
             if ($response->successful()) {
                 $rows = $this->parseCsv($response->body());
                 if (!empty($rows)) {
-                    Cache::put($cacheKey, $rows, now()->addMinutes($ttlMinutes));
+                    if ($ttl > 0) {
+                        Cache::put($cacheKey, $rows, now()->addMinutes($ttl));
+                    }
                     return $rows;
                 }
             }
@@ -98,12 +110,12 @@ class GoogleSheetService
             Log::error("Exception fetching Google Sheet: " . $e->getMessage());
         }
 
-        // If fetch failed, return existing cached data if any
+        // If live fetch failed, return existing cached data if any
         return $cached ?? [];
     }
 
     /**
-     * Get all rows from the primary configured Google Sheet.
+     * Get all rows from the primary configured Google Sheet in real-time.
      */
     public function getUnifiedRows(bool $forceFresh = false): array
     {
@@ -112,7 +124,7 @@ class GoogleSheetService
             return [];
         }
 
-        $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 5);
+        $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 0);
         return $this->fetchSheet($url, 'google_sheet_unified_data', $ttl, $forceFresh);
     }
 
