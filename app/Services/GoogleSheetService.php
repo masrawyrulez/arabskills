@@ -65,41 +65,55 @@ class GoogleSheetService
     /**
      * Fetch CSV from a Google Sheet URL with caching.
      */
-    public function fetchSheet(string $url, string $cacheKey, int $ttlMinutes = 10): array
+    public function fetchSheet(string $url, string $cacheKey, int $ttlMinutes = 5, bool $forceFresh = false): array
     {
         if (empty($url)) {
             return [];
         }
 
-        return Cache::remember($cacheKey, now()->addMinutes($ttlMinutes), function () use ($url) {
-            try {
-                $response = Http::timeout(15)
-                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'])
-                    ->get($url);
+        if ($forceFresh) {
+            Cache::forget($cacheKey);
+        }
 
-                if ($response->successful()) {
-                    return $this->parseCsv($response->body());
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null && !empty($cached) && !$forceFresh) {
+            return $cached;
+        }
+
+        try {
+            $response = Http::withoutVerifying()
+                ->timeout(15)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'])
+                ->get($url);
+
+            if ($response->successful()) {
+                $rows = $this->parseCsv($response->body());
+                if (!empty($rows)) {
+                    Cache::put($cacheKey, $rows, now()->addMinutes($ttlMinutes));
+                    return $rows;
                 }
-                Log::warning("Failed to fetch Google Sheet from {$url}: Status " . $response->status());
-            } catch (\Throwable $e) {
-                Log::error("Exception fetching Google Sheet: " . $e->getMessage());
             }
-            return [];
-        });
+            Log::warning("Failed to fetch Google Sheet from {$url}: Status " . $response->status());
+        } catch (\Throwable $e) {
+            Log::error("Exception fetching Google Sheet: " . $e->getMessage());
+        }
+
+        // If fetch failed, return existing cached data if any
+        return $cached ?? [];
     }
 
     /**
      * Get all rows from the primary configured Google Sheet.
      */
-    public function getUnifiedRows(): array
+    public function getUnifiedRows(bool $forceFresh = false): array
     {
         $url = $this->getCsvUrl();
         if (!$url) {
             return [];
         }
 
-        $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 10);
-        return $this->fetchSheet($url, 'google_sheet_unified_data', $ttl);
+        $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 5);
+        return $this->fetchSheet($url, 'google_sheet_unified_data', $ttl, $forceFresh);
     }
 
     /**
@@ -109,15 +123,20 @@ class GoogleSheetService
     {
         $code = trim($code);
         $unifiedRows = $this->getUnifiedRows();
-        foreach ($unifiedRows as $row) {
-            $rowCode = $this->extractField($row, ['ID', 'id', 'learner_code', 'Learner_Code', 'Code', 'code']);
-            if ($rowCode && strcasecmp($rowCode, $code) === 0) {
-                $link = strtolower($this->extractField($row, ['Link', 'link']));
-                if (str_contains($link, 'wfpc01') || str_starts_with(strtoupper($rowCode), 'OHF')) {
-                    return 'wfp';
-                }
-                return 'learner';
+
+        // If not found in current cache, try fresh
+        $match = $this->findInRows($unifiedRows, $code);
+        if (!$match) {
+            $unifiedRows = $this->getUnifiedRows(true);
+            $match = $this->findInRows($unifiedRows, $code);
+        }
+
+        if ($match) {
+            $link = strtolower($this->extractField($match, ['Link', 'link']));
+            if (str_contains($link, 'wfpc01') || str_starts_with(strtoupper($code), 'OHF')) {
+                return 'wfp';
             }
+            return 'learner';
         }
 
         if (str_starts_with(strtoupper($code), 'OHF') || Learner2::where('Learner_Code', $code)->exists()) {
@@ -134,46 +153,48 @@ class GoogleSheetService
     {
         $code = trim($code);
 
-        // 1. Check primary unified Google Sheet
+        // 1. Check primary unified Google Sheet (with auto-refresh if not found)
         $unifiedRows = $this->getUnifiedRows();
-        if (!empty($unifiedRows)) {
-            foreach ($unifiedRows as $row) {
-                $rowCode = $this->extractField($row, ['ID', 'id', 'learner_code', 'Learner_Code', 'Code', 'code']);
-                if ($rowCode && strcasecmp($rowCode, $code) === 0) {
-                    $name = $this->extractField($row, ['Name', 'name', 'Learner_Name', 'learner_name', 'الأسم', 'الاسم']);
-                    $client = $this->extractField($row, ['Cliente', 'client_name', 'Client_Name', 'Client', 'client']);
-                    $program = $this->extractField($row, ['اسم التدريب', 'Course_Name', 'course_name', 'program_name', 'Program_Name', 'Program', 'program', 'Track']);
-                    $date = $this->extractField($row, ['issue date', 'awarded_date', 'Awarded_Date', 'Date', 'date']);
+        $match = $this->findInRows($unifiedRows, $code);
 
-                    return (object) [
-                        'learner_code' => $rowCode,
-                        'learner_name' => $name,
-                        'program_name' => $program,
-                        'client_name'  => $client,
-                        'awarded_date' => $this->normalizeDate($date),
-                        'image_name'   => 'template1.jpg',
-                    ];
-                }
-            }
+        if (!$match) {
+            // Auto-refresh: newly added row might be in the live sheet
+            $unifiedRows = $this->getUnifiedRows(true);
+            $match = $this->findInRows($unifiedRows, $code);
+        }
+
+        if ($match) {
+            $rowCode = $this->extractField($match, ['ID', 'id', 'learner_code', 'Learner_Code', 'Code', 'code']);
+            $name = $this->extractField($match, ['Name', 'name', 'Learner_Name', 'learner_name', 'الأسم', 'الاسم']);
+            $client = $this->extractField($match, ['Cliente', 'client_name', 'Client_Name', 'Client', 'client']);
+            $program = $this->extractField($match, ['اسم التدريب', 'Course_Name', 'course_name', 'program_name', 'Program_Name', 'Program', 'program', 'Track']);
+            $date = $this->extractField($match, ['issue date', 'awarded_date', 'Awarded_Date', 'Date', 'date']);
+
+            return (object) [
+                'learner_code' => $rowCode ?: $code,
+                'learner_name' => $name,
+                'program_name' => $program,
+                'client_name'  => $client,
+                'awarded_date' => $this->normalizeDate($date),
+                'image_name'   => 'template1.jpg',
+            ];
         }
 
         // 2. Check dedicated learners sheet URL if defined
         $learnersUrl = env('GOOGLE_SHEET_LEARNERS_CSV_URL');
         if (!empty($learnersUrl)) {
-            $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 10);
+            $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 5);
             $rows = $this->fetchSheet($learnersUrl, 'google_sheet_learners_data', $ttl);
-            foreach ($rows as $row) {
-                $rowCode = $this->extractField($row, ['learner_code', 'Learner_Code', 'ID', 'code', 'Code']);
-                if ($rowCode && strcasecmp($rowCode, $code) === 0) {
-                    return (object) [
-                        'learner_code' => $rowCode,
-                        'learner_name' => $this->extractField($row, ['learner_name', 'Learner_Name', 'Name', 'name', 'الأسم']),
-                        'program_name' => $this->extractField($row, ['program_name', 'Program_Name', 'اسم التدريب', 'Course_Name', 'Program']),
-                        'client_name'  => $this->extractField($row, ['client_name', 'Client_Name', 'Cliente', 'Client']),
-                        'awarded_date' => $this->normalizeDate($this->extractField($row, ['awarded_date', 'Awarded_Date', 'issue date', 'Date'])),
-                        'image_name'   => 'template1.jpg',
-                    ];
-                }
+            $match = $this->findInRows($rows, $code);
+            if ($match) {
+                return (object) [
+                    'learner_code' => $this->extractField($match, ['learner_code', 'Learner_Code', 'ID', 'code', 'Code']),
+                    'learner_name' => $this->extractField($match, ['learner_name', 'Learner_Name', 'Name', 'name', 'الأسم']),
+                    'program_name' => $this->extractField($match, ['program_name', 'Program_Name', 'اسم التدريب', 'Course_Name', 'Program']),
+                    'client_name'  => $this->extractField($match, ['client_name', 'Client_Name', 'Cliente', 'Client']),
+                    'awarded_date' => $this->normalizeDate($this->extractField($match, ['awarded_date', 'Awarded_Date', 'issue date', 'Date'])),
+                    'image_name'   => 'template1.jpg',
+                ];
             }
         }
 
@@ -200,59 +221,61 @@ class GoogleSheetService
     {
         $code = trim($code);
 
-        // 1. Check primary unified Google Sheet
+        // 1. Check primary unified Google Sheet (with auto-refresh if not found)
         $unifiedRows = $this->getUnifiedRows();
-        if (!empty($unifiedRows)) {
-            foreach ($unifiedRows as $row) {
-                $rowCode = $this->extractField($row, ['ID', 'id', 'Learner_Code', 'learner_code', 'Code', 'code']);
-                if ($rowCode && strcasecmp($rowCode, $code) === 0) {
-                    $name = $this->extractField($row, ['Name', 'name', 'Learner_Name', 'learner_name', 'الأسم', 'الاسم']);
-                    $date = $this->extractField($row, ['issue date', 'Date', 'date', 'awarded_date']);
-                    $course = $this->extractField($row, ['اسم التدريب', 'Course_Name', 'course_name', 'program_name']);
-                    $track = $this->extractField($row, ['Track', 'track', 'التخصص']);
-                    $duration = $this->extractField($row, ['مدة التدريب', 'Training_Duration', 'training_duration']);
-                    $area = $this->extractField($row, ['Training Area', 'Training_Area', 'training_area', 'مكان التدريب']);
-                    $arDuration = $this->extractField($row, ['مدة التدريب']);
-                    $arTraining = $this->extractField($row, ['مكان التدريب', 'التدريب']);
-                    $arSpec = $this->extractField($row, ['التخصص']);
+        $match = $this->findInRows($unifiedRows, $code);
 
-                    return (object) [
-                        'Learner_Code'      => $rowCode,
-                        'Learner_Name'      => $name,
-                        'Date'              => $this->normalizeDate($date),
-                        'Course_Name'       => $course,
-                        'Track'             => $track,
-                        'Training_Duration' => $duration,
-                        'Training_Area'     => $area,
-                        'مدة التدريب'       => $arDuration,
-                        'التدريب'           => $arTraining,
-                        'التخصص'           => $arSpec,
-                    ];
-                }
-            }
+        if (!$match) {
+            // Auto-refresh: newly added row might be in the live sheet
+            $unifiedRows = $this->getUnifiedRows(true);
+            $match = $this->findInRows($unifiedRows, $code);
+        }
+
+        if ($match) {
+            $rowCode = $this->extractField($match, ['ID', 'id', 'Learner_Code', 'learner_code', 'Code', 'code']);
+            $name = $this->extractField($match, ['Name', 'name', 'Learner_Name', 'learner_name', 'الأسم', 'الاسم']);
+            $date = $this->extractField($match, ['issue date', 'Date', 'date', 'awarded_date']);
+            $course = $this->extractField($match, ['اسم التدريب', 'Course_Name', 'course_name', 'program_name']);
+            $track = $this->extractField($match, ['Track', 'track', 'التخصص']);
+            $duration = $this->extractField($match, ['مدة التدريب', 'Training_Duration', 'training_duration']);
+            $area = $this->extractField($match, ['Training Area', 'Training_Area', 'training_area', 'مكان التدريب']);
+            $arDuration = $this->extractField($match, ['مدة التدريب']);
+            $arTraining = $this->extractField($match, ['مكان التدريب', 'التدريب']);
+            $arSpec = $this->extractField($match, ['التخصص']);
+
+            return (object) [
+                'Learner_Code'      => $rowCode ?: $code,
+                'Learner_Name'      => $name,
+                'Date'              => $this->normalizeDate($date),
+                'Course_Name'       => $course,
+                'Track'             => $track,
+                'Training_Duration' => $duration,
+                'Training_Area'     => $area,
+                'مدة التدريب'       => $arDuration,
+                'التدريب'           => $arTraining,
+                'التخصص'           => $arSpec,
+            ];
         }
 
         // 2. Check dedicated WFP sheet URL if defined
         $wfpUrl = env('GOOGLE_SHEET_WFP_CSV_URL');
         if (!empty($wfpUrl)) {
-            $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 10);
+            $ttl = (int) env('GOOGLE_SHEET_CACHE_MINUTES', 5);
             $rows = $this->fetchSheet($wfpUrl, 'google_sheet_wfp_data', $ttl);
-            foreach ($rows as $row) {
-                $rowCode = $this->extractField($row, ['Learner_Code', 'learner_code', 'ID', 'Code', 'code']);
-                if ($rowCode && strcasecmp($rowCode, $code) === 0) {
-                    return (object) [
-                        'Learner_Code'      => $rowCode,
-                        'Learner_Name'      => $this->extractField($row, ['Learner_Name', 'learner_name', 'Name', 'الأسم']),
-                        'Date'              => $this->normalizeDate($this->extractField($row, ['Date', 'date', 'issue date'])),
-                        'Course_Name'       => $this->extractField($row, ['Course_Name', 'course_name', 'اسم التدريب']),
-                        'Track'             => $this->extractField($row, ['Track', 'track', 'التخصص']),
-                        'Training_Duration' => $this->extractField($row, ['Training_Duration', 'training_duration', 'مدة التدريب']),
-                        'Training_Area'     => $this->extractField($row, ['Training_Area', 'training_area', 'Training Area', 'مكان التدريب']),
-                        'مدة التدريب'       => $this->extractField($row, ['مدة التدريب']),
-                        'التدريب'           => $this->extractField($row, ['التدريب', 'مكان التدريب']),
-                        'التخصص'           => $this->extractField($row, ['التخصص']),
-                    ];
-                }
+            $match = $this->findInRows($rows, $code);
+            if ($match) {
+                return (object) [
+                    'Learner_Code'      => $this->extractField($match, ['Learner_Code', 'learner_code', 'ID', 'Code', 'code']),
+                    'Learner_Name'      => $this->extractField($match, ['Learner_Name', 'learner_name', 'Name', 'الأسم']),
+                    'Date'              => $this->normalizeDate($this->extractField($match, ['Date', 'date', 'issue date'])),
+                    'Course_Name'       => $this->extractField($match, ['Course_Name', 'course_name', 'اسم التدريب']),
+                    'Track'             => $this->extractField($match, ['Track', 'track', 'التخصص']),
+                    'Training_Duration' => $this->extractField($match, ['Training_Duration', 'training_duration', 'مدة التدريب']),
+                    'Training_Area'     => $this->extractField($match, ['Training_Area', 'training_area', 'Training Area', 'مكان التدريب']),
+                    'مدة التدريب'       => $this->extractField($match, ['مدة التدريب']),
+                    'التدريب'           => $this->extractField($match, ['التدريب', 'مكان التدريب']),
+                    'التخصص'           => $this->extractField($match, ['التخصص']),
+                ];
             }
         }
 
@@ -273,6 +296,20 @@ class GoogleSheetService
             ];
         }
 
+        return null;
+    }
+
+    /**
+     * Helper to find a row matching a code.
+     */
+    private function findInRows(array $rows, string $code): ?array
+    {
+        foreach ($rows as $row) {
+            $rowCode = $this->extractField($row, ['ID', 'id', 'learner_code', 'Learner_Code', 'Code', 'code']);
+            if ($rowCode && strcasecmp($rowCode, $code) === 0) {
+                return $row;
+            }
+        }
         return null;
     }
 
